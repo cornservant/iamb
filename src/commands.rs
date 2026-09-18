@@ -6,6 +6,7 @@
 use matrix_sdk::ruma::{OwnedMxcUri, RoomVersionId};
 use modalkit::commands::{CommandError, CommandResult, CommandStep};
 use modalkit::env::vim::command::{CommandContext, CommandDescription, OptionType};
+use temp_dir::TempDir;
 
 use crate::base::{
     CreateRoomFlags,
@@ -967,11 +968,16 @@ fn iamb_space(desc: CommandDescription, ctx: &mut ProgContext) -> ProgResult {
 fn iamb_upload(desc: CommandDescription, ctx: &mut ProgContext) -> ProgResult {
     let mut args = desc.arg.strings()?;
 
-    if args.len() != 1 {
+    if args.len() > 1 {
         return Result::Err(CommandError::InvalidArgument);
     }
 
-    let path = args.remove(0);
+    let path = if args.is_empty() {
+        pick_with_yazi()?
+    } else {
+        args.remove(0)
+    };
+
     let expanded_path =
         shellexpand::full(&path).map_err(|e| CommandError::ParseFailed(e.to_string()))?;
 
@@ -980,6 +986,34 @@ fn iamb_upload(desc: CommandDescription, ctx: &mut ProgContext) -> ProgResult {
     let step = CommandStep::Continue(iact.into(), ctx.context.clone());
 
     return Ok(step);
+}
+
+fn pick_with_yazi() -> Result<String, CommandError> {
+    let Ok(temp_dir) = TempDir::new() else {
+        return Result::Err(CommandError::Error("file picker: unable to create temp dir".into()));
+    };
+    let picked_file = temp_dir.child("yazi-picked");
+    let Ok(ret) = std::process::Command::new("yazi")
+        .arg("--chooser-file")
+        .arg(&picked_file)
+        .output()
+    else {
+        return Result::Err(CommandError::Error("file picker: could not run".into()));
+    };
+    if !ret.status.success() {
+        return Result::Err(CommandError::Error("file picker: exited with errors".into()));
+    }
+    if !picked_file.exists() {
+        return Result::Err(CommandError::Error(
+            "file picker: aborted".into(),
+        ));
+    }
+    let Ok(path) = std::fs::read_to_string(&picked_file) else {
+        return Result::Err(CommandError::Error(
+            "file picker: could not read picked file".into(),
+        ));
+    };
+    Result::Ok(path)
 }
 
 fn iamb_download(desc: CommandDescription, ctx: &mut ProgContext) -> ProgResult {
