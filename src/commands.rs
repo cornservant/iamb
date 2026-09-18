@@ -993,7 +993,9 @@ fn pick_with_yazi() -> Result<String, CommandError> {
         return Result::Err(CommandError::Error("file picker: unable to create temp dir".into()));
     };
     let picked_file = temp_dir.child("yazi-picked");
-    let Ok(ret) = std::process::Command::new("yazi")
+    let Ok(ret) = std::process::Command::new("ghostty")
+        .arg("-e")
+        .arg("yazi")
         .arg("--chooser-file")
         .arg(&picked_file)
         .output()
@@ -1004,14 +1006,10 @@ fn pick_with_yazi() -> Result<String, CommandError> {
         return Result::Err(CommandError::Error("file picker: exited with errors".into()));
     }
     if !picked_file.exists() {
-        return Result::Err(CommandError::Error(
-            "file picker: aborted".into(),
-        ));
+        return Result::Err(CommandError::Error("file picker: aborted".into()));
     }
     let Ok(path) = std::fs::read_to_string(&picked_file) else {
-        return Result::Err(CommandError::Error(
-            "file picker: could not read picked file".into(),
-        ));
+        return Result::Err(CommandError::Error("file picker: could not read picked file".into()));
     };
     Result::Ok(path)
 }
