@@ -1030,7 +1030,7 @@ fn iamb_upload(desc: CommandDescription, ctx: &mut ProgContext) -> ProgResult {
     return Ok(step);
 }
 
-fn pick_with_yazi() -> Result<String, CommandError> {
+fn pick_with_yazi() -> Result<PathBuf, CommandError> {
     let Ok(temp_dir) = TempDir::new() else {
         return Result::Err(CommandError::Error("file picker: unable to create temp dir".into()));
     };
@@ -1050,10 +1050,7 @@ fn pick_with_yazi() -> Result<String, CommandError> {
     if !picked_file.exists() {
         return Result::Err(CommandError::Error("file picker: aborted".into()));
     }
-    let Ok(path) = std::fs::read_to_string(&picked_file) else {
-        return Result::Err(CommandError::Error("file picker: could not read picked file".into()));
-    };
-    Result::Ok(path)
+    Result::Ok(picked_file)
 }
 
 fn iamb_download(desc: CommandDescription, ctx: &mut ProgContext) -> ProgResult {
