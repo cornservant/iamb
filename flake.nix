@@ -3,7 +3,7 @@
   nixConfig.bash-prompt = "[nix-develop]$ ";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/1e8bc658fc985ef27ccd66d107d767b32bb7ef98";
     flake-utils.url = "github:numtide/flake-utils";
     crane.url = "github:ipetkov/crane";
     fenix = {
